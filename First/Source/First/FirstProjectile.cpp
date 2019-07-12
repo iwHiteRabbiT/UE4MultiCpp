@@ -3,6 +3,7 @@
 #include "FirstProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 AFirstProjectile::AFirstProjectile() 
 {
@@ -40,4 +41,6 @@ void AFirstProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 
 		Destroy();
 	}
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
 }

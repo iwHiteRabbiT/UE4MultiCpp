@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "FirstProjectile.generated.h"
 
+
+class UParticleSystem;
+
 UCLASS(config=Game)
 class AFirstProjectile : public AActor
 {
@@ -18,6 +21,9 @@ class AFirstProjectile : public AActor
 	/** Projectile movement component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	class UProjectileMovementComponent* ProjectileMovement;
+
+	UPROPERTY(EditDefaultsOnly, Category = "FX")
+	UParticleSystem *ExplosionEffect;
 
 public:
 	AFirstProjectile();
