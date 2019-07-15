@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	USphereComponent* sphereComp;
 
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	USphereComponent* innerSphereComp;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UParticleSystem* pickupFX;
 
@@ -36,9 +39,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION()
+	void OnOverlapInner(UPrimitiveComponent* overlappedComp, AActor* otherActor, UPrimitiveComponent* otherComp,
+		int32 otherBodyIndex, bool fromSweep, const FHitResult &SweepResult);
+
 public:	
 
 	void Tick(float DeltaTime);
-
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 };

@@ -15,10 +15,22 @@ AFPSBlackHole::AFPSBlackHole()
 	RootComponent = meshComp;
 
 	sphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	sphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	sphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	sphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	// sphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	// sphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// sphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	sphereComp->SetupAttachment(meshComp);
+
+	innerSphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("InnerSphereComp"));
+	innerSphereComp->SetupAttachment(meshComp);
+
+	innerSphereComp->OnComponentBeginOverlap.AddDynamic(this, &AFPSBlackHole::OnOverlapInner);
+}
+
+void AFPSBlackHole::OnOverlapInner(UPrimitiveComponent* overlappedComp, AActor* otherActor, UPrimitiveComponent* otherComp,
+	int32 otherBodyIndex, bool fromSweep, const FHitResult &SweepResult)
+{
+	if (otherActor)
+		otherActor->Destroy();
 }
 
 // Called when the game starts or when spawned
@@ -36,25 +48,17 @@ void AFPSBlackHole::Tick(float DeltaTime)
 	TArray<UPrimitiveComponent*> collectedActors;
 	sphereComp->GetOverlappingComponents(collectedActors);
 
-	for (int i = 0; i < collectedActors.Num(); i++) 
-    { 
+	for (int32 i = 0; i < collectedActors.Num(); i++) 
+    {
         UPrimitiveComponent* anActor = collectedActors[i];
-		anActor->AddForce((GetActorLocation() - anActor->GetComponentLocation()).GetSafeNormal() * power);
+
+		if (anActor && anActor->IsSimulatingPhysics()) 
+		{
+			const float radius = sphereComp->GetScaledSphereRadius();
+
+			//anActor->AddForce((GetActorLocation() - anActor->GetComponentLocation()).GetSafeNormal() * power);
+			anActor->AddRadialForce(GetActorLocation(), radius, power, ERadialImpulseFalloff::RIF_Constant, true);
+		}
 		//anActor->AddRadialForce()
 	}
 }
-
-void AFPSBlackHole::NotifyActorBeginOverlap(AActor* OtherActor)
-{
-	Super::NotifyActorBeginOverlap(OtherActor);
-
-	// AFPSCharacter* myChar = Cast<AFPSCharacter>(OtherActor);
-
-	// if (myChar)
-	// {
-	// 	myChar->bIsCarryingObjective = true;
-
-	// 	Destroy();
-	// }
-}
-
