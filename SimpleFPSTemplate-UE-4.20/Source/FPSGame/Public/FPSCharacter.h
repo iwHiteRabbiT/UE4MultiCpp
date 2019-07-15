@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "FPSCharacter.generated.h"
 
+using namespace UP;
+
 class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
@@ -47,6 +49,9 @@ public:
 	/** AnimMontage to play each time we fire */
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
 	UAnimSequence* FireAnimation;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	bool bIsCarryingObjective;
 
 protected:
 	
