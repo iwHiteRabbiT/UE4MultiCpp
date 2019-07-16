@@ -4,6 +4,7 @@
 #include "FPSHUD.h"
 #include "FPSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 AFPSGameMode::AFPSGameMode()
 {
@@ -13,4 +14,36 @@ AFPSGameMode::AFPSGameMode()
 
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
+}
+
+void AFPSGameMode::CompleteMission(APawn* instigatorPawn)
+{
+	if (spectatingViewpointClass == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("spectatingViewpointClass == nullptr"));
+		return;
+	}
+
+	if(instigatorPawn)
+	{
+		instigatorPawn->DisableInput(nullptr);
+
+		TArray<AActor*> returnedActors;
+		UGameplayStatics::GetAllActorsOfClass(this, spectatingViewpointClass, returnedActors);
+
+		if (returnedActors.Num() > 0)
+		{
+			AActor* newViewTarget = nullptr;
+			newViewTarget = returnedActors[0];
+
+			APlayerController* pc = Cast<APlayerController>(instigatorPawn->GetController());
+
+			if (pc)
+			{
+				pc->SetViewTargetWithBlend(newViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
+			}
+		}
+	}
+
+	OnMissionCompleted(instigatorPawn);
 }

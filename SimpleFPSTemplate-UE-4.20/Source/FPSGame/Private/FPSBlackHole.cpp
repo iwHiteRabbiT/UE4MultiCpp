@@ -4,6 +4,7 @@
 #include "FPSBlackHole.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AFPSBlackHole::AFPSBlackHole()
@@ -30,7 +31,10 @@ void AFPSBlackHole::OnOverlapInner(UPrimitiveComponent* overlappedComp, AActor* 
 	int32 otherBodyIndex, bool fromSweep, const FHitResult &SweepResult)
 {
 	if (otherActor)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(this, pickupFX, otherActor->GetActorLocation());
 		otherActor->Destroy();
+	}
 }
 
 // Called when the game starts or when spawned
