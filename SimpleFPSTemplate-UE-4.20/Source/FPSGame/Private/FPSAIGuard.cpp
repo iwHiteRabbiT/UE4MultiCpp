@@ -5,6 +5,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -23,7 +24,8 @@ void AFPSAIGuard::BeginPlay()
 	Super::BeginPlay();
 
 	originalRot = GetActorRotation();
-	guardState = EAIState::Idle;
+	guardState = EAIState::MAX;
+	SetGuardState(EAIState::Idle);
 }
 
 void AFPSAIGuard::HandleOnSeePawn(APawn* Pawn)
@@ -75,13 +77,46 @@ void AFPSAIGuard::SetGuardState(EAIState newState)
 {
 	if (guardState == newState)
 		return;
-
-	if (guardState == EAIState::Alerted)
-		return;
-
 	guardState = newState;
 
+	// Nav
+	if (guardState == EAIState::Idle)
+		PatrolTo();
+	else
+	{
+		AController* controller = GetController();
+
+		if (controller)
+			controller->StopMovement();
+	}
+
+	// if (guardState == EAIState::Alerted)
+	// 	return;
+
 	OnStateChange(guardState);
+}
+
+void AFPSAIGuard::PatrolTo()
+{
+	if (!bPatrol)
+		return;
+
+	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), goals[currentGoal]);
+}
+
+void AFPSAIGuard::CheckPatrol()
+{
+	if (!bPatrol)
+		return;
+
+	AActor* goal = goals[currentGoal];
+
+	float dist = (goal->GetActorLocation() - GetActorLocation()).SizeSquared();
+	if (dist < 100*100)	
+	{
+		currentGoal = (currentGoal + 1) % goals.Num();
+		PatrolTo();
+	}
 }
 
 // Called every frame
@@ -89,5 +124,6 @@ void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	CheckPatrol();
 }
 

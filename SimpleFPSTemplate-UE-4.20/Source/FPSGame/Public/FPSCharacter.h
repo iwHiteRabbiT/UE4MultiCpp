@@ -7,6 +7,7 @@
 #include "FPSCharacter.generated.h"
 
 using namespace UP;
+using namespace UF;
 
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -61,6 +62,9 @@ protected:
 	
 	/** Fires a projectile. */
 	void Fire();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

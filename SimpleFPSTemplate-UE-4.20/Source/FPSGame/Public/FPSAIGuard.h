@@ -17,7 +17,8 @@ enum class EAIState : uint8
 {
 	Idle,
 	Suspicious,
-	Alerted
+	Alerted,
+	MAX
 };
 
 UCLASS()
@@ -54,8 +55,17 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "AI")
 	void OnStateChange(EAIState newState);
 
+	UPROPERTY(EditInstanceOnly, Category = "AI")
+	bool bPatrol;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI", meta = (EditCondition = "bPatrol"))
+	TArray<AActor*> goals;
+
+	int currentGoal;
+	void PatrolTo();
+	void CheckPatrol();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 };
