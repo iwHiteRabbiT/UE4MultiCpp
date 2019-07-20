@@ -3,6 +3,7 @@
 #include "FPSGameMode.h"
 #include "FPSHUD.h"
 #include "FPSCharacter.h"
+#include "FPSGameState.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -14,6 +15,8 @@ AFPSGameMode::AFPSGameMode()
 
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
+
+	GameStateClass = AFPSGameState::StaticClass();
 }
 
 void AFPSGameMode::CompleteMission(APawn* instigatorPawn, bool bMissionSuccess)
@@ -26,24 +29,27 @@ void AFPSGameMode::CompleteMission(APawn* instigatorPawn, bool bMissionSuccess)
 
 	if(instigatorPawn)
 	{
-		instigatorPawn->DisableInput(nullptr);
-
 		TArray<AActor*> returnedActors;
 		UGameplayStatics::GetAllActorsOfClass(this, spectatingViewpointClass, returnedActors);
 
 		if (returnedActors.Num() > 0)
 		{
-			AActor* newViewTarget = nullptr;
-			newViewTarget = returnedActors[0];
+			AActor* newViewTarget = returnedActors[0];
 
-			APlayerController* pc = Cast<APlayerController>(instigatorPawn->GetController());
-
-			if (pc)
-			{
-				pc->SetViewTargetWithBlend(newViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
+			for (FConstPlayerControllerIterator it = GetWorld()->GetPlayerControllerIterator(); it; it++)
+		    {
+        	    APlayerController* pc = it->Get();
+				if (pc)
+				{
+					pc->SetViewTargetWithBlend(newViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
+				}
 			}
 		}
 	}
+
+	AFPSGameState* gs = GetGameState<AFPSGameState>();
+	if(gs)
+		gs->MulticastOnMissionComplete(instigatorPawn, bMissionSuccess);
 
 	OnMissionCompleted(instigatorPawn, bMissionSuccess);
 }

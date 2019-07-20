@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -25,7 +26,9 @@ void AFPSAIGuard::BeginPlay()
 
 	originalRot = GetActorRotation();
 	guardState = EAIState::MAX;
-	SetGuardState(EAIState::Idle);
+
+	if (Role == ROLE_Authority)
+		SetGuardState(EAIState::Idle);
 }
 
 void AFPSAIGuard::HandleOnSeePawn(APawn* Pawn)
@@ -73,6 +76,11 @@ void AFPSAIGuard::ResetOrientation()
 	SetGuardState(EAIState::Idle);
 }
 
+void AFPSAIGuard::OnRep_GuardState()
+{
+	OnStateChange(guardState);
+}
+
 void AFPSAIGuard::SetGuardState(EAIState newState)
 {
 	if (guardState == newState)
@@ -93,7 +101,7 @@ void AFPSAIGuard::SetGuardState(EAIState newState)
 	// if (guardState == EAIState::Alerted)
 	// 	return;
 
-	OnStateChange(guardState);
+	OnRep_GuardState();
 }
 
 void AFPSAIGuard::PatrolTo()
@@ -124,6 +132,14 @@ void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	CheckPatrol();
+	if (Role == ROLE_Authority)
+		CheckPatrol();
+}
+
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AFPSAIGuard, guardState);
 }
 

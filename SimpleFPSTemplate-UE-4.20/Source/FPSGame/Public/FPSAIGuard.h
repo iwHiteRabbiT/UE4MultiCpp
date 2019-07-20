@@ -48,7 +48,11 @@ protected:
 	UFUNCTION()
 	void ResetOrientation();
 
+	UPROPERTY(ReplicatedUsing=OnRep_GuardState)
 	EAIState guardState;
+
+	UFUNCTION()
+	void OnRep_GuardState();
 
 	void SetGuardState(EAIState newState);
 
@@ -68,4 +72,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
