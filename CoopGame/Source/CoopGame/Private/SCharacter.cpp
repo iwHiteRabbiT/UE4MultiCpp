@@ -4,6 +4,7 @@
 #include "SCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -17,6 +18,8 @@ ASCharacter::ASCharacter()
 
 	camComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	camComp->SetupAttachment(springArmComp);
+
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 }
 
 // Called when the game starts or when spawned
@@ -36,6 +39,21 @@ void ASCharacter::MoveRight(float value)
 	AddMovementInput(GetActorRightVector() * value);
 }
 
+void ASCharacter::BeginCrouch()
+{
+	Crouch();
+}
+
+void ASCharacter::EndCrouch()
+{
+	UnCrouch();
+}
+
+// void ASCharacter::Jump()
+// {
+// 	UnCrouch();	
+// }
+
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
@@ -53,5 +71,18 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAxis("LookUp", this, &ASCharacter::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn", this, &ASCharacter::AddControllerYawInput);
+
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ASCharacter::BeginCrouch);
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ASCharacter::EndCrouch);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 }
 
+
+FVector ASCharacter::GetPawnViewLocation() const
+{
+	if (camComp)
+		return camComp->GetComponentLocation();
+
+	return Super::GetPawnViewLocation();
+}
