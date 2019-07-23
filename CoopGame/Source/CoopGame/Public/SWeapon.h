@@ -12,6 +12,7 @@ using namespace UF;
 class USkeletalMeshComponent;
 class UDamageType;
 class UParticleSystem;
+class UCameraShake;
 
 UCLASS()
 class COOPGAME_API ASWeapon : public AActor
@@ -23,14 +24,11 @@ public:
 	ASWeapon();
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* meshComp;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual void Fire();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<UDamageType> damageType;
@@ -42,7 +40,13 @@ protected:
 	FName muzzleSocketName;	
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	UParticleSystem* impactFX;
+	UParticleSystem* impactDefaultFX;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UParticleSystem* impactFleshDefaultFX;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UParticleSystem* impactFleshVulnerableFX;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName tracerTargetName;	
@@ -50,7 +54,31 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* tracerFX;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void PlayFireFX(FVector tracerEnd);
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	TSubclassOf<UCameraShake> fireCamShake;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float baseDamage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin = 1))
+	float vunerableDamageMultiplier;
+
+	virtual void Fire();
+
+	FTimerHandle timerHandle_TimeBetweenShots;
+
+	float lastFireTime;
+
+	/* RPM */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float rateOfFire;
+
+	float timeBetweenShots;
+
+public:
+	virtual void StartFire();
+
+	virtual void StopFire();
 };

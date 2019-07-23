@@ -33,10 +33,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	UProjectileMovementComponent* projectileMovement;
 
-	UPROPERTY(EditDefaultsOnly, Category = "FX")
-	UParticleSystem* explosionFX;
+	// UPROPERTY(EditDefaultsOnly, Category = "FX")
+	// UParticleSystem* explosionFX;
 
-	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	// UFUNCTION()
+	// void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 };

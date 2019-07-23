@@ -22,5 +22,4 @@ protected:
 	TSubclassOf<ASProjectile> projectileClass;
 
 	virtual void Fire() override;
-
 };

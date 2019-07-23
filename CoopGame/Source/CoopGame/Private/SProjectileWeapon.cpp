@@ -4,21 +4,31 @@
 #include "SProjectileWeapon.h"
 #include "SProjectile.h"
 #include "Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void ASProjectileWeapon::Fire()
 {
-    			// 	const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
-				// const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
-				//World->SpawnActor<AFirstProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+    AActor* myOwner = GetOwner();
 
-    if(projectileClass)
-    {
+    if(projectileClass && myOwner)
+	{
+		FVector eyeLoc;
+		FRotator eyeRot;
+		myOwner->GetActorEyesViewPoint(eyeLoc, eyeRot);
+
+		//FVector shotDir = eyeRot.Vector();
+		//FVector eyeEnd = eyeLoc + (shotDir * 10000);
+
+
         FVector muzzleLoc = meshComp->GetSocketLocation(muzzleSocketName);
-        FRotator rot = GetActorRotation();
+        //FRotator muzzleRot = meshComp->GetSocketRotation(muzzleSocketName);
 
-        GLog->Log(rot.Vector().ToString());
+        FActorSpawnParameters spawnPrms;
+        spawnPrms.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        GetWorld()->SpawnActor<ASProjectile>(projectileClass, muzzleLoc, rot);
+        GetWorld()->SpawnActor<ASProjectile>(projectileClass, muzzleLoc, eyeRot);
+
+        lastFireTime = GetWorld()->TimeSeconds;
     }
 
 }
