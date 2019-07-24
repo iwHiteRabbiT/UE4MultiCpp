@@ -1,0 +1,10 @@
+{
+	"files.exclude": {
+		"D:/Godot/UE4MultiCpp/SimpleFPSTemplate-UE-4.20/.vs": true,
+		"D:/Godot/UE4MultiCpp/SimpleFPSTemplate-UE-4.20/.vscode": true,
+		"D:/Godot/UE4MultiCpp/SimpleFPSTemplate-UE-4.20/Content": true,
+		"D:/Godot/UE4MultiCpp/SimpleFPSTemplate-UE-4.20/Intermediate": true,
+		"D:/Godot/UE4MultiCpp/SimpleFPSTemplate-UE-4.20/Saved": true
+	},
+	"C_Cpp.errorSquiggles": "Disabled"
+}

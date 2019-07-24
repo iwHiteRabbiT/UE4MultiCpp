@@ -1,0 +1,128 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "FPSGame (Debug)",
+			"request": "launch",
+			"preLaunchTask": "FPSGame Win64 Debug Build",
+			"program": "D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\Binaries\\Win64\\FPSGame-Win64-Debug.exe",
+			"args": [
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGame (DebugGame)",
+			"request": "launch",
+			"preLaunchTask": "FPSGame Win64 DebugGame Build",
+			"program": "D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\Binaries\\Win64\\FPSGame-Win64-DebugGame.exe",
+			"args": [
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGame (Development)",
+			"request": "launch",
+			"preLaunchTask": "FPSGame Win64 Development Build",
+			"program": "D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\Binaries\\Win64\\FPSGame.exe",
+			"args": [
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGame (Shipping)",
+			"request": "launch",
+			"preLaunchTask": "FPSGame Win64 Shipping Build",
+			"program": "D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\Binaries\\Win64\\FPSGame-Win64-Shipping.exe",
+			"args": [
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGame (Test)",
+			"request": "launch",
+			"preLaunchTask": "FPSGame Win64 Test Build",
+			"program": "D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\Binaries\\Win64\\FPSGame-Win64-Test.exe",
+			"args": [
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGameEditor (Debug)",
+			"request": "launch",
+			"preLaunchTask": "FPSGameEditor Win64 Debug Build",
+			"program": "D:\\Epic Games\\UE_4.22\\Engine\\Binaries\\Win64\\UE4Editor-Win64-Debug.exe",
+			"args": [
+				"D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\FPSGame.uproject"
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGameEditor (DebugGame)",
+			"request": "launch",
+			"preLaunchTask": "FPSGameEditor Win64 DebugGame Build",
+			"program": "D:\\Epic Games\\UE_4.22\\Engine\\Binaries\\Win64\\UE4Editor.exe",
+			"args": [
+				"D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\FPSGame.uproject"
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "FPSGameEditor (Development)",
+			"request": "launch",
+			"preLaunchTask": "FPSGameEditor Win64 Development Build",
+			"program": "D:\\Epic Games\\UE_4.22\\Engine\\Binaries\\Win64\\UE4Editor.exe",
+			"args": [
+				"D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\FPSGame.uproject"
+			],
+			"cwd": "D:\\Epic Games\\UE_4.22",
+			"stopAtEntry": false,
+			"externalConsole": true,
+			"type": "cppvsdbg",
+			"visualizerFile": "D:\\Epic Games\\UE_4.22\\Engine\\Extras\\VisualStudioDebugging\\UE4.natvis"
+		},
+		{
+			"name": "Generate Project Files",
+			"type": "clr",
+			"request": "launch",
+			"program": "D:\\Epic Games\\UE_4.22\\Engine\\Binaries\\DotNET\\UnrealBuildTool.exe",
+			"console": "externalTerminal",
+			"args": [
+				"-projectfiles",
+				"-vscode",
+				"-project=\"D:\\Godot\\UE4MultiCpp\\SimpleFPSTemplate-UE-4.20\\FPSGame.uproject\"",
+				"-game",
+				"-engine"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"cwd": "D:\\Epic Games\\UE_4.22"
+		}
+	]
+}
