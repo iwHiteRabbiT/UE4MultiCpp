@@ -31,6 +31,8 @@ ASWeapon::ASWeapon()
 	vunerableDamageMultiplier = 4.0f;
 
 	rateOfFire = 600;
+
+	SetReplicates(true);
 }
 
 void ASWeapon::BeginPlay()

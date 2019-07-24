@@ -42,7 +42,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FX")
 	UMaterialInterface* explodedMat;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Player")
+	UPROPERTY(BlueprintReadOnly, Category = "FX")
 	bool bExploded;
 
 	UFUNCTION()

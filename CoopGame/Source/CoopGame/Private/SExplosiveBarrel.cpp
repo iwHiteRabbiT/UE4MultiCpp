@@ -14,10 +14,16 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 {
 	meshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	meshComp->SetSimulatePhysics(true);
+	meshComp->SetCollisionObjectType(ECC_PhysicsBody);
 	RootComponent = meshComp;
 
 	radialForce = CreateDefaultSubobject<URadialForceComponent>(TEXT("RadialForce"));
+	radialForce->SetupAttachment(meshComp);
+	radialForce->Radius = 250;
 	radialForce->bIgnoreOwningActor = true;
+	radialForce->bImpulseVelChange = true;
+	radialForce->bAutoActivate = false;
+
 
 	healthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 
