@@ -28,6 +28,9 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 	healthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 
 	bExploded = false;
+
+	SetReplicates(true);
+	SetReplicateMovement(true);
 }
 
 // Called when the game starts or when spawned
