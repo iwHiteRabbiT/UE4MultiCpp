@@ -36,7 +36,7 @@ protected:
 	void HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 	UFUNCTION()
-	void OnRep_HealthChange();
+	void OnRep_HealthChange(float oldHealth);
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")

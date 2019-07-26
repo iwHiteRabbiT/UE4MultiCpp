@@ -42,9 +42,11 @@ void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, 
 	OnHealthChanged.Broadcast(this, health, Damage, DamageType, InstigatedBy, DamageCauser);
 }
 
-void USHealthComponent::OnRep_HealthChange()
+void USHealthComponent::OnRep_HealthChange(float oldHealth)
 {
-	OnHealthChanged.Broadcast(this, health, 0, nullptr, nullptr, nullptr);
+	float damage = oldHealth - health;
+
+	OnHealthChanged.Broadcast(this, health, damage, nullptr, nullptr, nullptr);
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
