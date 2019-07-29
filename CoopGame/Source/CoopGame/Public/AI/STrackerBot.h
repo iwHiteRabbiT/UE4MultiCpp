@@ -36,6 +36,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	USphereComponent* sphereComp;
 
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USphereComponent* triggerPowerComp;
+
 	FVector GetNextPathPoint();
 
 	FVector nextPathPoint;
@@ -60,7 +63,13 @@ protected:
 	UParticleSystem* explodeFX;
 
 	bool bExploded;
+
+	UPROPERTY(ReplicatedUsing = OnRep_StartedSelfDestructChange)
 	bool bStartedSelfDestruct;
+
+	UFUNCTION()
+	void OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct);
+
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float explosionRadius;
@@ -84,9 +93,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	USoundCue* selfDamageSound;
 
+	UFUNCTION()
+	void OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	//virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 };

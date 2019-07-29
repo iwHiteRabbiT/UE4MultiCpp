@@ -35,6 +35,9 @@ protected:
 	UFUNCTION()
 	void HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
+	UPROPERTY(Replicated)
+	AActor* damageCauser;
+
 	UFUNCTION()
 	void OnRep_HealthChange(float oldHealth);
 

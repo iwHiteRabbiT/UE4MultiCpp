@@ -22,6 +22,8 @@
 
 #include "Sound/SoundCue.h"
 
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 ASTrackerBot::ASTrackerBot()
 {
@@ -42,6 +44,20 @@ ASTrackerBot::ASTrackerBot()
 	sphereComp->SetCollisionResponseToChannels(ECR_Ignore);
 	sphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	sphereComp->SetupAttachment(RootComponent);
+
+	triggerPowerComp = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerPowerComp"));
+	triggerPowerComp->SetSphereRadius(600);
+	triggerPowerComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	triggerPowerComp->SetCollisionResponseToChannels(ECR_Ignore);
+	triggerPowerComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	triggerPowerComp->SetupAttachment(RootComponent);
+
+	if (Role == ROLE_Authority)
+	{
+		sphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerSelfDestructBeginOverlap);
+		triggerPowerComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerBeginOverlap);
+		triggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerEndOverlap);
+	}
 
 	movementForce = 1000.0f;
 	useVelocityChange = false;
@@ -90,7 +106,35 @@ FVector ASTrackerBot::GetNextPathPoint()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
+	//UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
+
+	// if (DamageCauser)
+	// {
+	// 	FString eq = this == DamageCauser ? TEXT("==") : TEXT("!=");
+
+	// 	if (Role == ROLE_Authority)
+	// 	{
+	// 		UE_LOG(LogTemp, Log, TEXT("SERVER: DamageCauser %s %s %s"), *this->GetName(), *eq, *DamageCauser->GetName());
+	// 	}
+	// 	else
+	// 	{
+	// 		UE_LOG(LogTemp, Log, TEXT("CLIENT: DamageCauser %s %s %s"), *this->GetName(), *eq, *DamageCauser->GetName());
+	// 	}
+	// }
+	// else
+	// {
+	// 	FString eq = this == DamageCauser ? TEXT("==") : TEXT("!=");
+
+	// 	if (Role == ROLE_Authority)
+	// 	{
+	// 		UE_LOG(LogTemp, Log, TEXT("SERVER: DamageCauser %s %s NULL"), *this->GetName(), *eq);
+	// 	}
+	// 	else
+	// 	{
+	// 		UE_LOG(LogTemp, Log, TEXT("CLIENT: DamageCauser %s %s NULL"), *this->GetName(), *eq);
+	// 	}
+	// }
+
 
 	if (matInst == nullptr)
 		matInst = meshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, meshComp->GetMaterial(0));
@@ -100,6 +144,9 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwnerHealthComp, float He
 
 	if (Health <= 0)
 		SelfDestruct();
+
+	if (DamageCauser == this)
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), selfDamageSound, GetActorLocation());
 }
 
 void ASTrackerBot::SelfDestruct()
@@ -128,28 +175,63 @@ void ASTrackerBot::SelfDestruct()
 	}
 }
 
+void ASTrackerBot::OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct)
+{
+	if (Role == ROLE_Authority)
+	{
+		UE_LOG(LogTemp, Log, TEXT("SERVER: OnRep_StartedSelfDestructChange"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("CLIENT: OnRep_StartedSelfDestructChange"));
+	}
+
+	if (!oldStartedSelfDestruct && bStartedSelfDestruct)
+		UGameplayStatics::SpawnSoundAttached(startSelfDestructSound, RootComponent);
+}
+
 void ASTrackerBot::DamageSelf()
 {
 	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
-	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), selfDamageSound, GetActorLocation());
 }
 
-void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+//void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+void ASTrackerBot::OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (bStartedSelfDestruct || bExploded)
 		return;
+
+	// UE_LOG(LogTemp, Log, TEXT("NotifyActorBeginOverlap %s"), *OtherActor->GetName());
 
 	ASCharacter* playerPawn = Cast<ASCharacter>(OtherActor);
 
 	if (playerPawn)
 	{
-		if (Role == ROLE_Authority)
+		//if (Role == ROLE_Authority)
 			GetWorldTimerManager().SetTimer(timerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, selfDamageInterval, true, 0.0f);
 
-		bStartedSelfDestruct = true;
+		if (Role == ROLE_Authority)
+		{
+			UE_LOG(LogTemp, Log, TEXT("SERVER: bStartedSelfDestruct = true"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("CLIENT: bStartedSelfDestruct = true"));
+		}
 
-		UGameplayStatics::SpawnSoundAttached(startSelfDestructSound, RootComponent);
+		bStartedSelfDestruct = true;
+		OnRep_StartedSelfDestructChange(false);
 	}
+}
+
+void ASTrackerBot::OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// UE_LOG(LogTemp, Log, TEXT("OnTriggerPowerBeginOverlap %s"), *OtherActor->GetName());
+}
+
+void ASTrackerBot::OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// UE_LOG(LogTemp, Log, TEXT("OnTriggerPowerEndOverlap %s"), *OtherActor->GetName());
 }
 
 // Called every frame
@@ -179,4 +261,11 @@ void ASTrackerBot::Tick(float DeltaTime)
 	}
 
 	DrawDebugSphere(GetWorld(), nextPathPoint, 20, 12, FColor::Yellow, false, 4.0f, 1.0f);
+}
+
+void ASTrackerBot::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASTrackerBot, bStartedSelfDestruct);
 }

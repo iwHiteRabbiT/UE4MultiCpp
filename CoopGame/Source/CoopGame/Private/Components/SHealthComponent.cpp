@@ -21,10 +21,16 @@ void USHealthComponent::BeginPlay()
 
 	if (GetOwnerRole() == ROLE_Authority)
 	{
+		UE_LOG(LogTemp, Log, TEXT("SERVER: Health BeginPlay"));
+
 		AActor* myOwner = GetOwner();
 
 		if (myOwner)
 			myOwner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::HandleTakeAnyDamage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("CLIENT: Health BeginPlay"));
 	}
 
 	health = defaultHealth;
@@ -35,18 +41,21 @@ void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, 
 	if (Damage <= 0.0f)
 		return;
 
+	damageCauser = DamageCauser;
 	health = FMath::Clamp(health - Damage, 0.0f, defaultHealth);
 
-	UE_LOG(LogTemp, Log, TEXT("Health changed %s"), *FString::SanitizeFloat(health));
+	UE_LOG(LogTemp, Log, TEXT("SERVER: Health changed %s"), *FString::SanitizeFloat(health));
 
 	OnHealthChanged.Broadcast(this, health, Damage, DamageType, InstigatedBy, DamageCauser);
 }
 
 void USHealthComponent::OnRep_HealthChange(float oldHealth)
 {
+	UE_LOG(LogTemp, Log, TEXT("CLIENT: Health changed %s"), *FString::SanitizeFloat(health));
+
 	float damage = oldHealth - health;
 
-	OnHealthChanged.Broadcast(this, health, damage, nullptr, nullptr, nullptr);
+	OnHealthChanged.Broadcast(this, health, damage, nullptr, nullptr, damageCauser);
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -54,4 +63,5 @@ void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(USHealthComponent, health);
+	DOREPLIFETIME(USHealthComponent, damageCauser);
 }
