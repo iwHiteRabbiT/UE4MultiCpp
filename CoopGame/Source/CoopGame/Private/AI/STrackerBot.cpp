@@ -54,9 +54,9 @@ ASTrackerBot::ASTrackerBot()
 
 	if (Role == ROLE_Authority)
 	{
-		sphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerSelfDestructBeginOverlap);
-		triggerPowerComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerBeginOverlap);
-		triggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerEndOverlap);
+		sphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTrigger6SelfDestructBeginOverlap);
+		// triggerPowerComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerBeginOverlap);
+		// triggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerEndOverlap);
 	}
 
 	movementForce = 1000.0f;
@@ -196,7 +196,7 @@ void ASTrackerBot::DamageSelf()
 }
 
 //void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
-void ASTrackerBot::OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASTrackerBot::OnTrigger6SelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (bStartedSelfDestruct || bExploded)
 		return;
