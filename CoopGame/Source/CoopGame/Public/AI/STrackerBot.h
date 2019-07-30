@@ -53,6 +53,8 @@ protected:
 
 	void CLIENT_TakeDamage(bool bByItself);
 
+	void CLIENT_SetMatFloat(FName ParamName, float Value);
+
 	FVector SERVER_GetNextPathPoint();
 
 	FVector S_NextPathPoint;
@@ -72,7 +74,6 @@ protected:
 	UFUNCTION()
 	void OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct);
 
-
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float ExplosionRadius;
 
@@ -84,7 +85,7 @@ protected:
 
 	FTimerHandle TimerHandle_SelfDamage;
 
-	void DamageSelf();
+	void SERVER_DamageSelf();
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	USoundCue* StartSelfDestructSound;
@@ -94,6 +95,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	USoundCue* SelfDamageSound;
+
+	UPROPERTY(ReplicatedUsing = OnRep_TrackerBotNearCount)
+	int8 R_TrackerBotNearCount;
+
+	UFUNCTION()
+	void OnRep_TrackerBotNearCount();
 
 	UFUNCTION()
 	void SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

@@ -80,6 +80,7 @@ void ASTrackerBot::BeginPlay()
 		TriggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::SERVER_OnTriggerPowerEndOverlap);
 
 		R_bStartedSelfDestruct = false;
+		R_TrackerBotNearCount = 0;
 	}
 }
 
@@ -105,8 +106,15 @@ FVector ASTrackerBot::SERVER_GetNextPathPoint()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
+	if (bExploded)
+	{
+		return;
+	}
+
 	if (Health <= 0)
+	{
 		SelfDestruct();
+	}
 
 	if(GetNetMode() != NM_DedicatedServer)
 	{
@@ -118,11 +126,7 @@ void ASTrackerBot::CLIENT_TakeDamage(bool bByItself)
 {
 	UE_LOG(LogTemp, Log, TEXT("CLIENT: TakeDamage"));
 
-	if (C_MatInst == nullptr)
-		C_MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
-
-	if (C_MatInst)
-		C_MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
+	CLIENT_SetMatFloat("LastTimeDamageTaken", GetWorld()->TimeSeconds);
 
 	if (bByItself)
 	{
@@ -131,10 +135,25 @@ void ASTrackerBot::CLIENT_TakeDamage(bool bByItself)
 	}
 }
 
+void ASTrackerBot::CLIENT_SetMatFloat(FName ParamName, float Value)
+{
+	if (C_MatInst == nullptr)
+	{
+		C_MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+	}
+
+	if (C_MatInst)
+	{
+		C_MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
+	}
+}
+
 void ASTrackerBot::SelfDestruct()
 {
 	if (bExploded)
+	{
 		return;
+	}
 
 	bExploded = true;
 
@@ -153,7 +172,7 @@ void ASTrackerBot::SelfDestruct()
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
 
-		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage * R_bStartedSelfDestruct, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
 
 		SetLifeSpan(2.0f);
@@ -166,7 +185,12 @@ void ASTrackerBot::OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct)
 		UGameplayStatics::SpawnSoundAttached(StartSelfDestructSound, RootComponent);
 }
 
-void ASTrackerBot::DamageSelf()
+void ASTrackerBot::OnRep_TrackerBotNearCount()
+{
+	CLIENT_SetMatFloat("TrackerBotNearCount", (float)R_TrackerBotNearCount);
+}
+
+void ASTrackerBot::SERVER_DamageSelf()
 {
 	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
 }
@@ -180,7 +204,7 @@ void ASTrackerBot::SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent*
 
 	if (PlayerPawn)
 	{
-		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, SelfDamageInterval, true, 0.0f);
+		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::SERVER_DamageSelf, SelfDamageInterval, true, 0.0f);
 
 		R_bStartedSelfDestruct = true;
 		OnRep_StartedSelfDestructChange(false);
@@ -189,38 +213,53 @@ void ASTrackerBot::SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent*
 
 void ASTrackerBot::SERVER_OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(Cast<ASTrackerBot>(OtherActor))
+	{
+		R_TrackerBotNearCount++;
+		OnRep_TrackerBotNearCount();
+	}
 }
 
 void ASTrackerBot::SERVER_OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if(Cast<ASTrackerBot>(OtherActor))
+	{
+		R_TrackerBotNearCount = --R_TrackerBotNearCount<0 ? 0 : R_TrackerBotNearCount;
+		OnRep_TrackerBotNearCount();
+	}
 }
 
 void ASTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Role != ROLE_Authority || bExploded)
+	if (bExploded)
+	{
 		return;
-
-	FVector Dir = S_NextPathPoint - GetActorLocation();
-	float dist = Dir.Size();
-
-	if(dist < MinDistToChange)
-	{
-		S_NextPathPoint = SERVER_GetNextPathPoint();
-
-		DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached!");
-	}
-	else	
-	{
-		Dir *= 1/dist;
-
-		MeshComp->AddForce(MovementForce * Dir, NAME_None, bUseVelocityChange);
-
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + MovementForce * Dir, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
 	}
 
-	DrawDebugSphere(GetWorld(), S_NextPathPoint, 20, 12, FColor::Yellow, false, 4.0f, 1.0f);
+	if (Role == ROLE_Authority)
+	{
+		FVector Dir = S_NextPathPoint - GetActorLocation();
+		float dist = Dir.Size();
+
+		if(dist < MinDistToChange)
+		{
+			S_NextPathPoint = SERVER_GetNextPathPoint();
+
+			DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached!");
+		}
+		else	
+		{
+			Dir *= 1/dist;
+
+			MeshComp->AddForce(MovementForce * Dir, NAME_None, bUseVelocityChange);
+
+			DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + MovementForce * Dir, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
+		}
+
+		DrawDebugSphere(GetWorld(), S_NextPathPoint, 20, 12, FColor::Yellow, false, 4.0f, 1.0f);
+	}
 }
 
 void ASTrackerBot::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -228,4 +267,5 @@ void ASTrackerBot::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASTrackerBot, R_bStartedSelfDestruct);
+	DOREPLIFETIME(ASTrackerBot, R_TrackerBotNearCount);
 }
