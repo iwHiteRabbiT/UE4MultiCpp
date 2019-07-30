@@ -28,79 +28,81 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	UStaticMeshComponent* meshComp;
+	UStaticMeshComponent* MeshComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	USHealthComponent* healthComp;
+	USHealthComponent* HealthComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	USphereComponent* sphereComp;
+	USphereComponent* SphereComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	USphereComponent* triggerPowerComp;
-
-	FVector GetNextPathPoint();
-
-	FVector nextPathPoint;
+	USphereComponent* TriggerPowerComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	float movementForce;
+	float MovementForce;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	bool useVelocityChange;
+	bool bUseVelocityChange;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	float minDistToChange;
+	float MinDistToChange;
 
 	UFUNCTION()
 	void HandleTakeDamage(USHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-	UMaterialInstanceDynamic* matInst;
+	void CLIENT_TakeDamage(bool bByItself);
+
+	FVector SERVER_GetNextPathPoint();
+
+	FVector S_NextPathPoint;
+
+	UMaterialInstanceDynamic* C_MatInst;
 
 	void SelfDestruct();
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	UParticleSystem* explodeFX;
+	UParticleSystem* ExplodeFX;
 
 	bool bExploded;
 
 	UPROPERTY(ReplicatedUsing = OnRep_StartedSelfDestructChange)
-	bool bStartedSelfDestruct;
+	bool R_bStartedSelfDestruct;
 
 	UFUNCTION()
 	void OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct);
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	float explosionRadius;
+	float ExplosionRadius;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	float explosionDamage;
+	float ExplosionDamage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	float selfDamageInterval;
+	float SelfDamageInterval;
 
-	FTimerHandle timerHandle_SelfDamage;
+	FTimerHandle TimerHandle_SelfDamage;
 
 	void DamageSelf();
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	USoundCue* startSelfDestructSound;
+	USoundCue* StartSelfDestructSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	USoundCue* selfDestructSound;
+	USoundCue* SelfDestructSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
-	USoundCue* selfDamageSound;
+	USoundCue* SelfDamageSound;
 
 	UFUNCTION()
-	void OnTrigger6SelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void SERVER_OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void SERVER_OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:	
 	// Called every frame

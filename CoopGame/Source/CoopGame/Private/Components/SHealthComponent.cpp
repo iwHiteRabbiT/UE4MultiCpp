@@ -8,7 +8,7 @@
 // Sets default values for this component's properties
 USHealthComponent::USHealthComponent()
 {
-	defaultHealth = 100.0f;
+	DefaultHealth = 100.0f;
 
 	SetIsReplicated(true);
 }
@@ -21,47 +21,46 @@ void USHealthComponent::BeginPlay()
 
 	if (GetOwnerRole() == ROLE_Authority)
 	{
-		UE_LOG(LogTemp, Log, TEXT("SERVER: Health BeginPlay"));
+		R_Health = DefaultHealth;
 
-		AActor* myOwner = GetOwner();
+		AActor* MyOwner = GetOwner();
 
-		if (myOwner)
-			myOwner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::HandleTakeAnyDamage);
+		if (MyOwner)
+			MyOwner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::SERVER_HandleTakeAnyDamage);			
 	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("CLIENT: Health BeginPlay"));
-	}
-
-	health = defaultHealth;
 }
 
-void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+void USHealthComponent::SERVER_HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Damage <= 0.0f)
+	{
 		return;
+	}
 
-	damageCauser = DamageCauser;
-	health = FMath::Clamp(health - Damage, 0.0f, defaultHealth);
+	R_DamageCauser = DamageCauser;
+	float Old_Health = R_Health;
 
-	UE_LOG(LogTemp, Log, TEXT("SERVER: Health changed %s"), *FString::SanitizeFloat(health));
+	R_Health = FMath::Clamp(R_Health - Damage, 0.0f, DefaultHealth);
+	OnRep_HealthChange(Old_Health);
 
-	OnHealthChanged.Broadcast(this, health, Damage, DamageType, InstigatedBy, DamageCauser);
+	// UE_LOG(LogTemp, Log, TEXT("SERVER: HandleTakeAnyDamage %s"), *FString::SanitizeFloat(R_Health));
+	//OnHealthChanged.Broadcast(this, R_Health, Damage, DamageType, InstigatedBy, DamageCauser);
 }
 
-void USHealthComponent::OnRep_HealthChange(float oldHealth)
+void USHealthComponent::OnRep_HealthChange(float OldHealth)
 {
-	UE_LOG(LogTemp, Log, TEXT("CLIENT: Health changed %s"), *FString::SanitizeFloat(health));
+	// AActor* MyOwner = GetOwner();
+	// UE_LOG(LogTemp, Log, TEXT("CLIENT: OnRep_HealthChange %s %s"), *FString::SanitizeFloat(R_Health), *MyOwner->GetName());
 
-	float damage = oldHealth - health;
+	float Damage = OldHealth - R_Health;
 
-	OnHealthChanged.Broadcast(this, health, damage, nullptr, nullptr, damageCauser);
+	OnHealthChanged.Broadcast(this, R_Health, Damage, nullptr, nullptr, R_DamageCauser);
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(USHealthComponent, health);
-	DOREPLIFETIME(USHealthComponent, damageCauser);
+	DOREPLIFETIME(USHealthComponent, R_Health);
+	DOREPLIFETIME(USHealthComponent, R_DamageCauser);
 }

@@ -27,76 +27,75 @@
 // Sets default values
 ASTrackerBot::ASTrackerBot()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	meshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
-	meshComp->SetCanEverAffectNavigation(false);
-	meshComp->SetSimulatePhysics(true);
-	RootComponent = meshComp;
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
+	MeshComp->SetCanEverAffectNavigation(false);
+	MeshComp->SetSimulatePhysics(true);
+	RootComponent = MeshComp;
 
-	healthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
-	healthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
+	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 
-	sphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	sphereComp->SetSphereRadius(400);
-	sphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	sphereComp->SetCollisionResponseToChannels(ECR_Ignore);
-	sphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	sphereComp->SetupAttachment(RootComponent);
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetSphereRadius(400);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionResponseToChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetupAttachment(RootComponent);
 
-	triggerPowerComp = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerPowerComp"));
-	triggerPowerComp->SetSphereRadius(600);
-	triggerPowerComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	triggerPowerComp->SetCollisionResponseToChannels(ECR_Ignore);
-	triggerPowerComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	triggerPowerComp->SetupAttachment(RootComponent);
+	TriggerPowerComp = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerPowerComp"));
+	TriggerPowerComp->SetSphereRadius(600);
+	TriggerPowerComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	TriggerPowerComp->SetCollisionResponseToChannels(ECR_Ignore);
+	TriggerPowerComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	TriggerPowerComp->SetupAttachment(RootComponent);
 
-	if (Role == ROLE_Authority)
-	{
-		sphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTrigger6SelfDestructBeginOverlap);
-		// triggerPowerComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerBeginOverlap);
-		// triggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::OnTriggerPowerEndOverlap);
-	}
+	MovementForce = 1000.0f;
+	bUseVelocityChange = true;
+	MinDistToChange = 100.0f;
 
-	movementForce = 1000.0f;
-	useVelocityChange = false;
-	minDistToChange = 100.0f;
-
-	explosionRadius = 300;
-	explosionDamage = 40.0f;
+	ExplosionRadius = 300;
+	ExplosionDamage = 40.0f;
 
 	bExploded = false;
-	bStartedSelfDestruct = false;
 
-	selfDamageInterval = 1.0f;
+	SelfDamageInterval = 1.0f;
 
 	SetReplicates(true);
 	SetReplicateMovement(true);
 }
 
-// Called when the game starts or when spawned
 void ASTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
+
 	if (Role == ROLE_Authority)
-		nextPathPoint = GetNextPathPoint();	
+	{
+		S_NextPathPoint = SERVER_GetNextPathPoint();	
+
+		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::SERVER_OnTriggerSelfDestructBeginOverlap);
+		TriggerPowerComp->OnComponentBeginOverlap.AddDynamic(this, &ASTrackerBot::SERVER_OnTriggerPowerBeginOverlap);
+		TriggerPowerComp->OnComponentEndOverlap.AddDynamic(this, &ASTrackerBot::SERVER_OnTriggerPowerEndOverlap);
+
+		R_bStartedSelfDestruct = false;
+	}
 }
 
-FVector ASTrackerBot::GetNextPathPoint()
+FVector ASTrackerBot::SERVER_GetNextPathPoint()
 {
-	ACharacter* playerPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
+	ACharacter* PlayerPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
 
-	if (playerPawn)
+	if (PlayerPawn)
 	{
-		UNavigationPath* navPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), playerPawn);
+		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
 
-		if (navPath)
+		if (NavPath)
 		{
-			if(navPath->PathPoints.Num() > 1)
+			if(NavPath->PathPoints.Num() > 1)
 			{
-				return navPath->PathPoints[1];
+				return NavPath->PathPoints[1];
 			}
 		}
 	}
@@ -106,47 +105,30 @@ FVector ASTrackerBot::GetNextPathPoint()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	//UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
-
-	// if (DamageCauser)
-	// {
-	// 	FString eq = this == DamageCauser ? TEXT("==") : TEXT("!=");
-
-	// 	if (Role == ROLE_Authority)
-	// 	{
-	// 		UE_LOG(LogTemp, Log, TEXT("SERVER: DamageCauser %s %s %s"), *this->GetName(), *eq, *DamageCauser->GetName());
-	// 	}
-	// 	else
-	// 	{
-	// 		UE_LOG(LogTemp, Log, TEXT("CLIENT: DamageCauser %s %s %s"), *this->GetName(), *eq, *DamageCauser->GetName());
-	// 	}
-	// }
-	// else
-	// {
-	// 	FString eq = this == DamageCauser ? TEXT("==") : TEXT("!=");
-
-	// 	if (Role == ROLE_Authority)
-	// 	{
-	// 		UE_LOG(LogTemp, Log, TEXT("SERVER: DamageCauser %s %s NULL"), *this->GetName(), *eq);
-	// 	}
-	// 	else
-	// 	{
-	// 		UE_LOG(LogTemp, Log, TEXT("CLIENT: DamageCauser %s %s NULL"), *this->GetName(), *eq);
-	// 	}
-	// }
-
-
-	if (matInst == nullptr)
-		matInst = meshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, meshComp->GetMaterial(0));
-
-	if (matInst)
-		matInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
-
 	if (Health <= 0)
 		SelfDestruct();
 
-	if (DamageCauser == this)
-		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), selfDamageSound, GetActorLocation());
+	if(GetNetMode() != NM_DedicatedServer)
+	{
+		CLIENT_TakeDamage(DamageCauser == this);
+	}
+}
+
+void ASTrackerBot::CLIENT_TakeDamage(bool bByItself)
+{
+	UE_LOG(LogTemp, Log, TEXT("CLIENT: TakeDamage"));
+
+	if (C_MatInst == nullptr)
+		C_MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+
+	if (C_MatInst)
+		C_MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
+
+	if (bByItself)
+	{
+		UE_LOG(LogTemp, Log, TEXT("CLIENT: SpawnSoundAtLocation"));
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), SelfDamageSound, GetActorLocation());
+	}
 }
 
 void ASTrackerBot::SelfDestruct()
@@ -156,20 +138,23 @@ void ASTrackerBot::SelfDestruct()
 
 	bExploded = true;
 
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), explodeFX, GetActorLocation());
-	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), selfDestructSound, GetActorLocation());
+	if(GetNetMode() != NM_DedicatedServer)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeFX, GetActorLocation());
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), SelfDestructSound, GetActorLocation());
 
-	RootComponent->SetVisibility(false, true);
-	meshComp->SetSimulatePhysics(false);
-	meshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		RootComponent->SetVisibility(false, true);
+		MeshComp->SetSimulatePhysics(false);
+		MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
 	if (Role == ROLE_Authority)
 	{
-		TArray<AActor*> ignoredActors;
-		ignoredActors.Add(this);
+		TArray<AActor*> IgnoredActors;
+		IgnoredActors.Add(this);
 
-		UGameplayStatics::ApplyRadialDamage(this, explosionDamage, GetActorLocation(), explosionRadius, nullptr, ignoredActors, this, GetInstigatorController(), true);
-		DrawDebugSphere(GetWorld(), GetActorLocation(), explosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
+		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
 
 		SetLifeSpan(2.0f);
 	}
@@ -177,17 +162,8 @@ void ASTrackerBot::SelfDestruct()
 
 void ASTrackerBot::OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct)
 {
-	if (Role == ROLE_Authority)
-	{
-		UE_LOG(LogTemp, Log, TEXT("SERVER: OnRep_StartedSelfDestructChange"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("CLIENT: OnRep_StartedSelfDestructChange"));
-	}
-
-	if (!oldStartedSelfDestruct && bStartedSelfDestruct)
-		UGameplayStatics::SpawnSoundAttached(startSelfDestructSound, RootComponent);
+	if (!oldStartedSelfDestruct && R_bStartedSelfDestruct)
+		UGameplayStatics::SpawnSoundAttached(StartSelfDestructSound, RootComponent);
 }
 
 void ASTrackerBot::DamageSelf()
@@ -195,46 +171,30 @@ void ASTrackerBot::DamageSelf()
 	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
 }
 
-//void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
-void ASTrackerBot::OnTrigger6SelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASTrackerBot::SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (bStartedSelfDestruct || bExploded)
+	if (R_bStartedSelfDestruct || bExploded)
 		return;
 
-	// UE_LOG(LogTemp, Log, TEXT("NotifyActorBeginOverlap %s"), *OtherActor->GetName());
+	ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
 
-	ASCharacter* playerPawn = Cast<ASCharacter>(OtherActor);
-
-	if (playerPawn)
+	if (PlayerPawn)
 	{
-		//if (Role == ROLE_Authority)
-			GetWorldTimerManager().SetTimer(timerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, selfDamageInterval, true, 0.0f);
+		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, SelfDamageInterval, true, 0.0f);
 
-		if (Role == ROLE_Authority)
-		{
-			UE_LOG(LogTemp, Log, TEXT("SERVER: bStartedSelfDestruct = true"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Log, TEXT("CLIENT: bStartedSelfDestruct = true"));
-		}
-
-		bStartedSelfDestruct = true;
+		R_bStartedSelfDestruct = true;
 		OnRep_StartedSelfDestructChange(false);
 	}
 }
 
-void ASTrackerBot::OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASTrackerBot::SERVER_OnTriggerPowerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// UE_LOG(LogTemp, Log, TEXT("OnTriggerPowerBeginOverlap %s"), *OtherActor->GetName());
 }
 
-void ASTrackerBot::OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ASTrackerBot::SERVER_OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	// UE_LOG(LogTemp, Log, TEXT("OnTriggerPowerEndOverlap %s"), *OtherActor->GetName());
 }
 
-// Called every frame
 void ASTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -242,30 +202,30 @@ void ASTrackerBot::Tick(float DeltaTime)
 	if (Role != ROLE_Authority || bExploded)
 		return;
 
-	FVector fDir = nextPathPoint - GetActorLocation();
-	float dist = fDir.Size();
+	FVector Dir = S_NextPathPoint - GetActorLocation();
+	float dist = Dir.Size();
 
-	if(dist < minDistToChange)
+	if(dist < MinDistToChange)
 	{
-		nextPathPoint = GetNextPathPoint();
+		S_NextPathPoint = SERVER_GetNextPathPoint();
 
 		DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached!");
 	}
 	else	
 	{
-		fDir *= 1/dist;
+		Dir *= 1/dist;
 
-		meshComp->AddForce(movementForce * fDir, NAME_None, useVelocityChange);
+		MeshComp->AddForce(MovementForce * Dir, NAME_None, bUseVelocityChange);
 
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + movementForce * fDir, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
+		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + MovementForce * Dir, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
 	}
 
-	DrawDebugSphere(GetWorld(), nextPathPoint, 20, 12, FColor::Yellow, false, 4.0f, 1.0f);
+	DrawDebugSphere(GetWorld(), S_NextPathPoint, 20, 12, FColor::Yellow, false, 4.0f, 1.0f);
 }
 
 void ASTrackerBot::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ASTrackerBot, bStartedSelfDestruct);
+	DOREPLIFETIME(ASTrackerBot, R_bStartedSelfDestruct);
 }

@@ -27,19 +27,19 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_HealthChange, BlueprintReadOnly, Category = "HealthComponent")
-	float health;
+	float R_Health;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HealthComponent")
-	float defaultHealth;
+	float DefaultHealth;
 
 	UFUNCTION()
-	void HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	void SERVER_HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 	UPROPERTY(Replicated)
-	AActor* damageCauser;
+	AActor* R_DamageCauser;
 
 	UFUNCTION()
-	void OnRep_HealthChange(float oldHealth);
+	void OnRep_HealthChange(float OldHealth);
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
