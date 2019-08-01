@@ -172,7 +172,7 @@ void ASTrackerBot::SelfDestruct()
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
 
-		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage * R_TrackerBotNearCount, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage * (1.0f + R_TrackerBotNearCount), GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
 
 		SetLifeSpan(2.0f);
@@ -182,7 +182,9 @@ void ASTrackerBot::SelfDestruct()
 void ASTrackerBot::OnRep_StartedSelfDestructChange(bool oldStartedSelfDestruct)
 {
 	if (!oldStartedSelfDestruct && R_bStartedSelfDestruct)
+	{
 		UGameplayStatics::SpawnSoundAttached(StartSelfDestructSound, RootComponent);
+	}
 }
 
 void ASTrackerBot::OnRep_TrackerBotNearCount()
@@ -197,10 +199,10 @@ void ASTrackerBot::SERVER_DamageSelf()
 
 void ASTrackerBot::SERVER_OnTriggerSelfDestructBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	return;
-
 	if (R_bStartedSelfDestruct || bExploded)
+	{
 		return;
+	}
 
 	ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
 
