@@ -7,22 +7,39 @@
 // Sets default values
 ASPowerUpActor::ASPowerUpActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PowerUpInterval = 0.0f;
+	TotalNbOfTicks = 0;
+	TicksProcessed = 0;
 }
 
 // Called when the game starts or when spawned
 void ASPowerUpActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
-void ASPowerUpActor::Tick(float DeltaTime)
+void ASPowerUpActor::OnTickPowerUp()
 {
-	Super::Tick(DeltaTime);
+	TicksProcessed++;
 
+	OnPowerUpTicked();
+
+	if (TicksProcessed >= TotalNbOfTicks)
+	{
+		OnExpired();
+
+		GetWorldTimerManager().ClearTimer(TimerHandle_PowerUpTick);
+	}
 }
 
+void ASPowerUpActor::SERVER_ActivatePower()
+{
+	if (PowerUpInterval > 0)
+	{
+		GetWorldTimerManager().SetTimer(TimerHandle_PowerUpTick, this, &ASPowerUpActor::OnTickPowerUp, PowerUpInterval, true, 0.0f);
+	}
+	else
+	{
+		OnTickPowerUp();
+	}
+}

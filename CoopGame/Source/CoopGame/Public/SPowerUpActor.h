@@ -22,10 +22,33 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	/* Time between power ticks */
+	UPROPERTY(EditDefaultsOnly, Category = "PowerUps")
+	float PowerUpInterval;
 
+	/* Total times we apply the PowerUp */
+	UPROPERTY(EditDefaultsOnly, Category = "PowerUps")
+	int32 TotalNbOfTicks;
+
+	FTimerHandle TimerHandle_PowerUpTick;
+
+	// Total number of ticks applied
+	int32 TicksProcessed;
+
+	UFUNCTION()
+	void OnTickPowerUp();
+
+
+public:	
+
+	void SERVER_ActivatePower();
 	
-	
+	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
+	void OnActivated();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
+	void OnPowerUpTicked();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
+	void OnExpired();
 };
