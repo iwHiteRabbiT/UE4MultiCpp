@@ -41,7 +41,7 @@ protected:
 
 public:	
 
-	void SERVER_ActivatePower();
+	void SERVER_ActivatePowerUp();
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
 	void OnActivated();

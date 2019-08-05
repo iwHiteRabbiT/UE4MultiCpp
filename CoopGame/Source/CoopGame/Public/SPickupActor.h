@@ -10,6 +10,7 @@ using namespace UP;
 using namespace UF;
 
 class USphereComponent;
+class ASPowerUpActor;
 
 UCLASS()
 class COOPGAME_API ASPickupActor : public AActor
@@ -22,14 +23,27 @@ public:
 
 protected:
 
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	USphereComponent* SphereComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UDecalComponent* DecalComp;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UPROPERTY(EditDefaultsOnly, Category = "PowerUp")
+	TSubclassOf<ASPowerUpActor> PowerUpClass;
+
+	UFUNCTION()
+	void Respawn();
+
+	ASPowerUpActor* PowerUpInstance;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PowerUp")
+	float CooldownDuration;
+
+	FTimerHandle TimerHandle_Cooldown;
 
 public:	
 
