@@ -30,13 +30,17 @@ protected:
 	FTimerHandle TimerHandle_PowerUpTick;
 
 	// Total number of ticks applied
-	int32 TicksProcessed;
+	UPROPERTY(ReplicatedUsing = OnRep_PowerUpTicked)
+	int32 RU_TicksProcessed;
+
+	UFUNCTION()
+	void OnRep_PowerUpTicked();
 
 	UFUNCTION()
 	void SERVER_OnTickPowerUp();
 
 	UPROPERTY(ReplicatedUsing = OnRep_PowerUpActive)
-	bool bIsPowerUpActive;
+	bool RU_bIsPowerUpActive;
 
 	UFUNCTION()
 	void OnRep_PowerUpActive();
@@ -44,16 +48,19 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
 	void OnPowerUpStateChange(bool bIsActive);
 
-public:	
-
-	void SERVER_ActivatePowerUp();
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
-	void OnActivated();
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	AActor* R_ActivatedTargetActor;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
 	void OnPowerUpTicked();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
-	void OnExpired();
+public:	
+
+	void SERVER_ActivatePowerUp(AActor* ActivateFor);
+	
+	// UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
+	// void OnActivated();
+
+	// UFUNCTION(BlueprintImplementableEvent, Category = "PowerUps")
+	// void OnExpired();
 };

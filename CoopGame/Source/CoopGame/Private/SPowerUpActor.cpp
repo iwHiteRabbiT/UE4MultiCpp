@@ -10,24 +10,25 @@ ASPowerUpActor::ASPowerUpActor()
 {
 	PowerUpInterval = 0.0f;
 	TotalNbOfTicks = 0;
-	TicksProcessed = 0;
+	RU_TicksProcessed = 0;
 
-	bIsPowerUpActive = false;
+	RU_bIsPowerUpActive = false;
+
+	R_ActivatedTargetActor = nullptr;
 
 	SetReplicates(true);
 }
 
 void ASPowerUpActor::SERVER_OnTickPowerUp()
 {
-	TicksProcessed++;
+	RU_TicksProcessed++;	
+	OnRep_PowerUpTicked();
 
-	OnPowerUpTicked();
-
-	if (TicksProcessed >= TotalNbOfTicks)
+	if (RU_TicksProcessed >= TotalNbOfTicks)
 	{
-		OnExpired();
+		// OnExpired();
 
-		bIsPowerUpActive = false;
+		RU_bIsPowerUpActive = false;
 		OnRep_PowerUpActive();
 
 		GetWorldTimerManager().ClearTimer(TimerHandle_PowerUpTick);
@@ -36,15 +37,21 @@ void ASPowerUpActor::SERVER_OnTickPowerUp()
 
 void ASPowerUpActor::OnRep_PowerUpActive()
 {
-	OnPowerUpStateChange(bIsPowerUpActive);
+	OnPowerUpStateChange(RU_bIsPowerUpActive);
 }
 
-void ASPowerUpActor::SERVER_ActivatePowerUp()
+void ASPowerUpActor::OnRep_PowerUpTicked()
 {
-	OnActivated();
+	OnPowerUpTicked();
+}
 
-	bIsPowerUpActive = true;
+void ASPowerUpActor::SERVER_ActivatePowerUp(AActor* ActivateFor)
+{
+	R_ActivatedTargetActor = ActivateFor;
+	RU_bIsPowerUpActive = true;
 	OnRep_PowerUpActive();
+
+	// OnActivated();
 
 	if (PowerUpInterval > 0)
 	{
@@ -60,5 +67,7 @@ void ASPowerUpActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ASPowerUpActor, bIsPowerUpActive);
+	DOREPLIFETIME(ASPowerUpActor, RU_bIsPowerUpActive);
+	DOREPLIFETIME(ASPowerUpActor, R_ActivatedTargetActor);
+	DOREPLIFETIME(ASPowerUpActor, RU_TicksProcessed);	
 }
