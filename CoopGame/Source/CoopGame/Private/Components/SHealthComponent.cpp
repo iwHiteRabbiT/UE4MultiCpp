@@ -4,11 +4,14 @@
 #include "SHealthComponent.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
+#include "SGameMode.h"
+#include "Engine/World.h"
 
 // Sets default values for this component's properties
 USHealthComponent::USHealthComponent()
 {
 	DefaultHealth = 100.0f;
+	bIsDead = false;
 
 	SetIsReplicated(true);
 }
@@ -32,7 +35,7 @@ void USHealthComponent::BeginPlay()
 
 void USHealthComponent::SERVER_HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	if (Damage <= 0.0f)
+	if (Damage <= 0.0f || bIsDead)
 	{
 		return;
 	}
@@ -45,6 +48,17 @@ void USHealthComponent::SERVER_HandleTakeAnyDamage(AActor* DamagedActor, float D
 
 	// UE_LOG(LogTemp, Log, TEXT("SERVER: HandleTakeAnyDamage %s"), *FString::SanitizeFloat(R_Health));
 	//OnHealthChanged.Broadcast(this, R_Health, Damage, DamageType, InstigatedBy, DamageCauser);
+
+	bIsDead = R_Health <= 0.0f;
+
+	if (bIsDead)
+	{
+		ASGameMode* GM = Cast<ASGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM)
+		{
+			GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
+		}
+	}
 }
 
 void USHealthComponent::OnRep_HealthChange(float OldHealth)
@@ -55,6 +69,11 @@ void USHealthComponent::OnRep_HealthChange(float OldHealth)
 	float Damage = OldHealth - R_Health;
 
 	OnHealthChanged.Broadcast(this, R_Health, Damage, nullptr, nullptr, R_DamageCauser);
+}
+
+float USHealthComponent::GetHealth() const
+{
+	return R_Health;
 }
 
 void USHealthComponent::Heal(float HealAmount)
