@@ -90,7 +90,7 @@ void ASWeapon::Fire()
 			if (surfaceType == SURFACE_FLESHDVULNERABLE)
 				actualDamage *= vunerableDamageMultiplier;
 
-			UGameplayStatics::ApplyPointDamage(hitActor, actualDamage, shotDir, hit, myOwner->GetInstigatorController(), this, damageType);
+			UGameplayStatics::ApplyPointDamage(hitActor, actualDamage, shotDir, hit, myOwner->GetInstigatorController(), myOwner, damageType);
 
 			tracerEnd = hit.ImpactPoint;
 

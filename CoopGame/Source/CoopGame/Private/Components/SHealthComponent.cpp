@@ -13,9 +13,28 @@ USHealthComponent::USHealthComponent()
 	DefaultHealth = 100.0f;
 	bIsDead = false;
 
+	TeamNum = 255;
+
 	SetIsReplicated(true);
 }
 
+bool USHealthComponent::IsFriendly(AActor* ActorA, AActor* ActorB)
+{
+	if (ActorA == nullptr || ActorB == nullptr)
+	{
+		return true;
+	}
+
+	USHealthComponent* HealthA = Cast<USHealthComponent>(ActorA->GetComponentByClass(USHealthComponent::StaticClass()));
+	USHealthComponent* HealthB = Cast<USHealthComponent>(ActorB->GetComponentByClass(USHealthComponent::StaticClass()));
+
+	if (HealthA == nullptr || HealthB == nullptr)
+	{
+		return true;
+	}
+
+	return HealthA->TeamNum == HealthB->TeamNum;
+}
 
 // Called when the game starts
 void USHealthComponent::BeginPlay()
@@ -36,6 +55,11 @@ void USHealthComponent::BeginPlay()
 void USHealthComponent::SERVER_HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Damage <= 0.0f || bIsDead)
+	{
+		return;
+	}
+
+	if (DamagedActor != DamageCauser && IsFriendly(DamagedActor, DamageCauser))
 	{
 		return;
 	}
@@ -102,4 +126,5 @@ void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(USHealthComponent, R_Health);
 	DOREPLIFETIME(USHealthComponent, R_DamageCauser);
+	DOREPLIFETIME(USHealthComponent, R_Health);	
 }
