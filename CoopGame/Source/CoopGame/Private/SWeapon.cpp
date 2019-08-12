@@ -29,6 +29,7 @@ ASWeapon::ASWeapon()
 	tracerTargetName = "Target";
 
 	baseDamage = 20.0f;
+	BulletSpread = 2.0f;
 	vunerableDamageMultiplier = 4.0f;
 
 	rateOfFire = 600;
@@ -37,6 +38,7 @@ ASWeapon::ASWeapon()
 
 	NetUpdateFrequency = 66.0f;
 	MinNetUpdateFrequency = 33.0f;
+
 }
 
 void ASWeapon::BeginPlay()
@@ -61,6 +63,10 @@ void ASWeapon::Fire()
 		myOwner->GetActorEyesViewPoint(eyeLoc, eyeRot);
 
 		FVector shotDir = eyeRot.Vector();
+
+		float HalfRad = FMath::DegreesToRadians(BulletSpread);
+		shotDir = FMath::VRandCone(shotDir, HalfRad, HalfRad);
+
 		FVector eyeEnd = eyeLoc + (shotDir * 10000);
 
 		FCollisionQueryParams qParams;

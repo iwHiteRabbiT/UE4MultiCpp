@@ -84,6 +84,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin = 1))
 	float vunerableDamageMultiplier;
 
+	/* Bullet Spread in Degrees */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin = 0))
+	float BulletSpread;
+
 	virtual void Fire();
 
 	UFUNCTION(Server, Reliable, WithValidation)
