@@ -111,6 +111,10 @@ protected:
 	UFUNCTION()
 	void SERVER_OnTriggerPowerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	FTimerHandle TimerHandle_RefreshPath;
+
+	void SERVER_RefreshPath();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
